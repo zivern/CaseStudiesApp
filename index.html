@@ -11,7 +11,7 @@
 	<!--[if lte IE 8]><link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.1/leaflet.ie.css" /><![endif]-->
 	<script src="http://cdn.leafletjs.com/leaflet-0.7.1/leaflet.js" type="text/javascript"></script>
 
-	<!-- Case Studies Data -->
+	<!-- GeoJSON Data -->
 	<script src="src/js/Citizen_Profile.js"></script>	
 	<script src="src/js/Community_Development.js"></script>	
 	<script src="src/js/Completed_LTA_Project.js"></script>	
@@ -20,6 +20,7 @@
 	<script src="src/js/Housing.js"></script>	
 	<script src="src/js/Land_Use.js"></script>	
 	<script src="src/js/Transportation.js"></script>
+	<script src="src/js/CountyOutlines.js"></script>
 	
 	<script src="src/js/Case_Studies.js"></script>	
 	
@@ -33,11 +34,13 @@
 	<script src="src/js/l.control.geosearch.js"></script>
 	<script src="src/js/l.geosearch.provider.google.js"></script>
 	<script src="http://maps.googleapis.com/maps/api/js?&key=AIzaSyBkZvruAqjHD2fcf-swenX2Y6EiM3DVKhg&sensor=false&amp;libraries=places"></script>
-	<link rel="stylesheet" href="src/css/l.geosearch.css" />	
+	<link rel="stylesheet" href="src/css/l.geosearch.css" />
+	<script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.2.4"></script>
 	
 </head>
 <body>
-		<div id="map" ></div>
+	
+	<div id="map" ></div>
 
 	<script type="text/javascript">
 		
@@ -58,7 +61,14 @@
 		var aerAttrib='Tiles Courtesy of <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png">';
 		var aer = new L.TileLayer(aerUrl, {minZoom: 6, maxZoom: 18, attribution: aerAttrib});
 
-		
+
+		// Define County Border style and add to map
+		var countyStyle = {color: '#33334C', weight: 2, opacity:0.9, fillOpacity:0};
+		countyOutlineLayer = L.geoJson(countyOutlines, {
+			style: countyStyle
+		});
+		map.addLayer(countyOutlineLayer);
+
 		//Set style of case studies layers and add to map
         citizenProfileLayer = L.geoJson(citizenProfile, {                
             pointToLayer: function (feature, latlng) {                    
@@ -90,12 +100,13 @@
                 layer.bindPopup("<b>Project Name: </b>"+feature.properties.Name+"<br><b>Location: </b>"+feature.properties.Location_o+"<br><br><b>Description: </b>"+feature.properties.Brief_Overview+"<br><b><a href="+feature.properties.More_infor+">More Info</a></b><br><br><b>Tags: </b>"+feature.properties.Related_To);
         }
         });
-		
-        map.addLayer(citizenProfileLayer);
+
+		map.addLayer(citizenProfileLayer);
 		map.on('zoomend', function(e) {
 			 if ( map.getZoom() > 12 ){ map.removeLayer(citizenProfileLayer), map.addLayer(citizenProfileLayerZoom)}
 			 else if ( map.getZoom() <= 12 ){ map.removeLayer(citizenProfileLayerZoom), map.addLayer(citizenProfileLayer)}
 		});		
+	
 
         communityDevelopmentLayer = L.geoJson(communityDevelopment, {                
             pointToLayer: function (feature, latlng) {                    
@@ -362,13 +373,14 @@
 			 if ( map.getZoom() > 12 ){ map.removeLayer(transportationLayer), map.addLayer(transportationLayerZoom)}
 			 else if ( map.getZoom() <= 12 ){ map.removeLayer(transportationLayerZoom), map.addLayer(transportationLayer)}
 		});	
-			
-		// Define layer groups and add to map
+
+		
+		// Define layer groups and add to map legend
 		var baseMaps = {
 			"Streets": osm,
 			"Aerials": aer
 		};
-		
+
 		var overlayMaps = {
 			"<img src='src\\images\\icon_citizenProfiles.png'> Citizen Profiles": citizenProfileLayer,
 			"<img src='src\\images\\icon_communityDevelopment.png'> Community Development": communityDevelopmentLayer,
@@ -380,21 +392,31 @@
 			"<img src='src\\images\\icon_transportation.png'> Transportation": transportationLayer
 			
 		};
-		
-		L.control.layers(baseMaps, overlayMaps, {collapsed: false}).addTo(map);
-		
-		//Define mini-map
-		var miniUrl='http://{s}.tile.cloudmade.com/3131bff15d8146c98df912085c838a8e/998/256/{z}/{x}/{y}.png';
-		var miniAttrib='Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a>';
-		var mini = new L.TileLayer(miniUrl, {minZoom: 2, maxZoom: 18, attribution: miniAttrib});
 
+		var legend = new L.control.layers(baseMaps, overlayMaps, {
+			collapsed: false
+		}).addTo(map);
 		
-		//Add geo-search control
-		new L.Control.GeoSearch({ 
+	
+		//Add geo-search
+		new L.Control.GeoSearch({
+			position:'topright',
 			provider: new L.GeoSearch.Provider.Google({
 				language: 'en',
 				region: 'US'
 			})
+		}).addTo(map);
+		
+		
+		//Add overview map
+		var miniURL = new L.StamenTileLayer("toner")
+		////var miniURL = new L.TileLayer(osmUrl);
+		var rect1 = {color: '#3366FF', weight: 3, opacity:1, fillOpacity:0};
+		var miniMap = new L.Control.MiniMap(miniURL, {aimingRectOptions: rect1, 
+			zoomLevelFixed: 7, 
+			autoToggleDisplay: false,
+			width: 250,
+			height:200
 		}).addTo(map);
 		
 		//Add scale bar
@@ -403,15 +425,7 @@
 			metric: true
 		}).addTo(map);
 		
-		//Add overview map
-		var miniURL = new L.TileLayer(osmUrl);
-		var rect1 = {color: '#3366FF', weight: 3, opacity:1, fillOpacity:0.1};
-		var miniMap = new L.Control.MiniMap(miniURL, {aimingRectOptions: rect1, 
-			zoomLevelFixed: 7, 
-			autoToggleDisplay: false,
-			width: 250,
-			height:200
-		}).addTo(map);
+
 
 	</script>
 </body>
