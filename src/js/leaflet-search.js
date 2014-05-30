@@ -32,28 +32,28 @@ L.Control.Search = L.Control.extend({
 		layer: null,				//layer where search markers(is a L.LayerGroup)		
 		callData: null,				//function that fill _recordsCache, passed searching text by first param and callback in second
 		//TODO important! implements uniq option 'sourceData' that recognizes source type: url,array,callback or layer		
-		propertyName: 'title',		//property in marker.options(or feature.properties for vector layer) trough filter elements in layer
-		propertyLoc: 'loc',			//field name for remapping location, using array: ['latname','lonname'] for select double fields(ex. ['lat','lon'] )
+		propertyName: 'Brief_Overview',		//property in marker.options(or feature.properties for vector layer) trough filter elements in layer
+		propertyLoc: 'Coordinates',			//field name for remapping location, using array: ['latname','lonname'] for select double fields(ex. ['lat','lon'] )
 		//TODO implement sub property filter for propertyName,propertyLoc like this:  "prop.subprop.title"
 		callTip: null,				//function that return row tip html node(or html string), receive text tooltip in first param
 		filterJSON: null,			//callback for filtering data to _recordsCache
-		minLength: 1,				//minimal text length for autocomplete
+		minLength: 4,				//minimal text length for autocomplete
 		initial: true,				//search elements only by initial text
 		autoType: true,				//complete input with first suggested result and select this filled-in text.
 		delayType: 400,				//delay while typing for show tooltip
 		tooltipLimit: -1,			//limit max results to show in tooltip. -1 for no limit.
 		tipAutoSubmit: true,  		//auto map panTo when click on tooltip
-		autoResize: true,			//autoresize on input change
+		autoResize: false,			//autoresize on input change
 		autoCollapse: false,		//collapse search control after submit(on button or on tips if enabled tipAutoSubmit)
 		//TODO add option for persist markerLoc after collapse!
-		autoCollapseTime: 1200,		//delay for autoclosing alert and collapse after blur
+		autoCollapseTime: 12000000,		//delay for autoclosing alert and collapse after blur
 		animateLocation: true,		//animate a circle over location found
 		circleLocation: true,		//draw a circle in location found
 		markerLocation: false,		//draw a marker in location found
 		zoom: 15,					//zoom after pan to location found, default: map.getZoom()
-		text: 'Project Name...',			//placeholder value	
+		text: 'Search by description...',			//placeholder value	
 		textCancel: 'Cancel',		//title in cancel button
-		textErr: 'Location not found',	//error message
+		textErr: '',	//error message
 		position: 'topleft',
 		//TODO add option collapsed, like control.layers
 	},
@@ -146,22 +146,22 @@ L.Control.Search = L.Control.extend({
 		this._input.style.display = 'block';
 		L.DomUtil.addClass(this._container, 'search-exp');	
 		this._input.focus();
-		this._map.on('dragstart', this.collapse, this);
+		// this._map.on('dragstart', this.collapse, this);
 		return this;	
 	},
 
 	collapse: function() {
-		this._hideTooltip();
+		// this._hideTooltip();
 		this.cancel();
-		this._alert.style.display = 'none';
-		this._input.style.display = 'none';
-		this._input.blur();
-		this._cancel.style.display = 'none';
-		L.DomUtil.removeClass(this._container, 'search-exp');		
-		//this._markerLoc.hide();//maybe unuseful
-		this._map.off('dragstart', this.collapse, this);
-		this.fire('search_collapsed');
-		return this;
+		// this._alert.style.display = 'none';
+		// this._input.style.display = 'none';
+		// this._input.blur();
+		// this._cancel.style.display = 'none';
+		// L.DomUtil.removeClass(this._container, 'search-exp');		
+		// //this._markerLoc.hide();//maybe unuseful
+		// this._map.off('dragstart', this.collapse, this);
+		// this.fire('search_collapsed');
+		// return this;
 	},
 	
 	collapseDelayed: function() {	//collapse after delay, used on_input blur
@@ -227,6 +227,7 @@ L.Control.Search = L.Control.extend({
 		var button = L.DomUtil.create('a', className, this._container);
 		button.href = '#';
 		button.title = title;
+		this.expand();
 
 		L.DomEvent
 			.on(button, 'click', L.DomEvent.stop, this)
@@ -510,9 +511,9 @@ L.Control.Search = L.Control.extend({
 			case 27: //Esc
 				this.collapse();
 			break;
-			case 13: //Enter
-				this._handleSubmit();	//do search
-			break;
+			//case 13: //Enter
+			//	this._handleSubmit();	//do search
+			//break;
 			case 38://Up
 				this._handleArrowSelect(-1);
 			break;
@@ -648,8 +649,7 @@ L.Control.Search = L.Control.extend({
 
 	_handleSubmit: function() {	//button and tooltip click and enter submit
 
-		this._hideAutoType();
-		
+//		this._hideAutoType();
 		this.hideAlert();
 		this._hideTooltip();
 
@@ -692,6 +692,7 @@ L.Control.Search = L.Control.extend({
 			
 		if(this.options.zoom)
 			this._map.setView(latlng, this.options.zoom);
+			
 		else
 			this._map.panTo(latlng);
 
@@ -702,13 +703,16 @@ L.Control.Search = L.Control.extend({
 			this._markerLoc.show();
 			if(this.options.animateLocation)
 				this._markerLoc.animate();
+			
 			//TODO showLocation: start animation after setView or panTo, maybe with map.on('moveend')...	
 		}
 		
 		//FIXME autoCollapse option hide this._markerLoc before that visualized!!
 		if(this.options.autoCollapse)
 			this.collapse();
+			//caseStudiesLayer.openPopup();
 		return this;
+
 	}
 });
 
@@ -829,4 +833,3 @@ L.control.search = function (options) {
 };
 
 }).call(this);
-
